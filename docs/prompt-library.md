@@ -395,6 +395,20 @@ the event taxonomy (what events exist, what each carries), RLS policy
 logic per role, the dedup rules including edge cases, the upload flow
 end-to-end, and binary acceptance criteria.
 
+Model decisions already made — the spec must honour these:
+- Canonical pipeline stages are the default on every role (New → Screening
+  → CV Shared → Interview rounds → Offer → Joined); a custom stage can be
+  added case-by-case per mandate
+- Stage and outcome are separate fields. Candidate participation outcomes:
+  joined / rejected_by_client / withdrawn_by_candidate / offer_declined /
+  role_cancelled — stored with the stage reached
+- Candidate outcomes are never mixed with Role status (active / paused /
+  closed)
+- Rejection reasons are a one-tap picklist, never free text
+- The Role's `calibration` field is nullable, reserved, and untouched
+- Event taxonomy must accommodate commitment events, interaction events,
+  and a severity dimension on flags (designed in now, used Sprint 3)
+
 ---
 
 ## Definition of Done

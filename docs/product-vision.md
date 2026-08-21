@@ -116,8 +116,8 @@ The entire system is built from five objects and one stream. Nothing else is pri
 | Primitive | Definition |
 |---|---|
 | **Client** | An organization Hyperhunt serves. Owns roles, team contacts, preferences. |
-| **Role** | A mandate. The primary unit of work. Owns exactly one Hiring Pipeline, a JD, priority, consultant assignment, and (future) a calibration slot for the relevance engine. |
-| **Hiring Pipeline** | The staged process belonging to a Role: New → Screening → Submitted → Interview rounds → Offer → Joined / Rejected. The consultant's primary workspace. |
+| **Role** | A mandate. The primary unit of work. Owns exactly one Hiring Pipeline, a JD, priority, consultant assignment, status (`active` / `paused` / `closed`), and a nullable **calibration** field — reserved and unused in Phase 1. Calibration will hold the structured definition of what "good" means for that mandate: the tacit knowledge a consultant carries that the JD never states ("client says 8 years, means 5–6 with the right depth", "no services-company backgrounds", "must have owned a P&L"). Today that knowledge dies when a role closes; the relevance engine will read it, score against it, and refine it from outcomes. |
+| **Hiring Pipeline** | The staged process belonging to a Role: New → Screening → CV Shared → Interview rounds → Offer → Joined. Canonical set by default on every role; a custom stage can be added case-by-case when a specific mandate needs one. The consultant's primary workspace. |
 | **Candidate** | A person, stored once in the Candidate Bank, deduplicated, linked to any number of roles as a participant. |
 | **Event** | An immutable, timestamped, structured record of any action: upload, stage move, feedback, submission, note, nudge. Carries actor, object references, and a **visibility dimension** (internal / client-safe). |
 
@@ -152,6 +152,8 @@ Capabilities:
 - Complete cross-role history per candidate: every role participated in, every stage reached, every feedback received, source and consultant — all derived from the event log, never entered
 - Bank-wide search across skill, company, experience, and role history
 - Closed roles feed the bank instead of ending the relationship: rejected-but-strong candidates become the first pool searched on the next mandate
+- **Second path to add a candidate to a role** (Sprint 2): open a role → search the Bank → add an existing candidate, ranked by attributes already stored (skills from the JD, experience range, location, prior participation with this client). Attribute-based matching only; AI relevance scoring belongs to the relevance engine. The Sprint 1 schema is designed so this path needs no migration
+- **No global candidate score.** Relevance is relational — the same person is a strong fit for one role and a poor one for another — so a single number answers no real question. The Bank stores rich structured attributes (skills, experience, companies, seniority, tags) as the searchable substrate; role-relative fit scores arrive with the relevance engine
 - **Conflict warnings, derived free from the event log:** linking a candidate to a role surfaces "active in [role] with [consultant]" or "previously submitted to this client on [date]" — preventing duplicate submissions and internal collisions before they embarrass anyone
 - The compounding asset: every mandate enriches the bank, and the bank is the retrieval pool the future relevance engine ranks against
 
@@ -173,6 +175,7 @@ One upload. Eight side effects. Zero re-typing. This flow is the product's thesi
 - Candidate cards: name, company, experience, stage, source, resume, last activity, last feedback — minimal and actionable
 - Candidate timeline and role activity timeline as derived views (never entered)
 - Simple feedback capture: interview → feedback → decision → notes; nothing more
+- **One-tap rejection reasons** (Sprint 1): when a participation ends, the reason is captured from a fixed picklist — not enough depth, comp mismatch, location, notice period, communication, culture fit, overqualified, client changed brief, better candidate available, other. Never free text. Stored structured on the outcome event: this is the labelled judgment data the future relevance engine learns from, and it cannot be collected retroactively. Context-aware option suggestions (tailored by role, client, and candidate) are a Sprint 3+ enhancement once enough data exists
 
 ## 5. Consultant Workspace (My Desk)
 
@@ -197,7 +200,7 @@ One composition capability, three outputs, all delivered copy-to-paste (zero beh
 
 **Client Brief** — updates in Hyperhunt's voice from client-safe events: pipeline snapshot, movement since last update, what's pending on whose side, one nudge. Curated, not raw: shows pendency, never blame; the framing is always "here's what unblocks your role."
 
-**Submission Pack** — the largest single clerical chore in agency work, eliminated: one click at the Submitted stage generates the branded Hyperhunt submission CV from the already-parsed profile (standard template, candidate contact details stripped), plus the AI candidate summary and the consultant's note. What took 20–40 minutes per candidate becomes a review-and-send.
+**Submission Pack** — the largest single clerical chore in agency work, eliminated: one click at the CV Shared stage generates the branded Hyperhunt submission CV from the already-parsed profile (standard template, candidate contact details stripped), plus the AI candidate summary and the consultant's note. What took 20–40 minutes per candidate becomes a review-and-send.
 
 **Candidate Messages** — interview confirmation with details and prep pointers, offer congratulations, joining-date reminders. Composed from events, in Hyperhunt's voice, one tap to copy into the consultant's existing WhatsApp thread.
 
@@ -300,8 +303,8 @@ Each sprint has one objective (per HSES constitution) and is defined by the manu
 
 | Sprint | Kills | Delivers | Done when |
 |---|---|---|---|
-| **1** | Duplicate data entry | Identity (Supabase Auth + RLS, three roles) + Spine + Magic Upload + event log foundation (taxonomy must accommodate commitment and interaction events, and a severity dimension on flags — designed in now, used in Sprint 3) | A real CV uploaded to a real role by a real logged-in consultant produces the full automatic cascade, with row-level security enforcing per-user scope |
-| **2** | Status bookkeeping | Drag-and-drop movement + auto history/metrics + Candidate Bank profile view (cross-role history) + My Desk v1 (role portfolio + candidates in motion) + search | Stage moves generate history and metrics with zero manual entry; a consultant's whole book of work is visible from one screen |
+| **1** | Duplicate data entry | Identity (Supabase Auth + RLS, three roles) + Spine + Magic Upload + event log foundation. Taxonomy must accommodate commitment and interaction events, a severity dimension on flags (designed in now, used Sprint 3), participation outcomes with stage-reached, and one-tap rejection reasons | A real CV uploaded to a real role by a real logged-in consultant produces the full automatic cascade, with row-level security enforcing per-user scope |
+| **2** | Status bookkeeping | Drag-and-drop movement + auto history/metrics + Candidate Bank profile view (cross-role history) + add-candidate-from-Bank path + My Desk v1 (role portfolio + candidates in motion) + search | Stage moves generate history and metrics with zero manual entry; a consultant's whole book of work is visible from one screen |
 | **3** | Update-typing, CV reformatting, candidate messaging | Composers: Client Briefs + Submission Packs + Candidate Messages (all copy-to-paste) + seven v1 nudge rules | A consultant sends a real client update and a real submission pack without typing or reformatting anything |
 | **4** | Asking | Decision Layer: Consultant Workspace matured (Today queue + computed prioritization) + Delivery Lead and CEO dashboards + six metrics with drill-down | Consultants run 90% of their day from My Desk; reviews and leadership decisions run from the dashboards |
 | **Deferred** | — | WhatsApp Cloud API groups; external-phase features | OBA verification (start early, in parallel) and internal-phase exit |
@@ -337,9 +340,10 @@ Deliberately absent: MAUs, revenue, AI feature counts. The internal phase optimi
 
 Three assets compound quietly while the internal phase runs:
 
-1. **The Idea 1 attachment points.** The Role carries a nullable calibration field; terminal pipeline stages (joined/rejected) are first-class outcome events. The relevance engine later plugs in as another background consumer of the same stream — reading calibrations, learning from outcomes — with no remodel.
+1. **The Idea 1 attachment points.** The Role carries a nullable calibration field; participation outcomes (joined / rejected_by_client / withdrawn_by_candidate / offer_declined / role_cancelled) are first-class events carrying the stage reached and a structured rejection reason. The relevance engine later plugs in as another background consumer of the same stream — reading calibrations, learning from outcomes — with no remodel.
 2. **Tenancy-readiness.** Every table carries an organization ID from day one, containing only "Hyperhunt" until the external phase. One column now; a migration nightmare avoided later. No Hyperhunt-specific logic is hardcoded.
 3. **The event history itself.** Every week of internal use deepens the dataset that powers benchmarks, nudges, and eventually cross-client intelligence — the moat that cannot be bought, only accumulated.
+4. **Conversational access to the whole stream (post-Sprint 4).** A read-only MCP server over the event log lets leadership interrogate live operations from Claude — "which roles are stalled?", "what rejection patterns dominate for this client?" — without a chat surface ever entering the product. The Sprint 1 schema is already MCP-ready; this costs days, not weeks, when the history is deep enough to answer. In the external phase, "ask your recruiting data anything" is a selling point incumbents' data models cannot support.
 
 ---
 
