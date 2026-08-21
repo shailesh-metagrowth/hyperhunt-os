@@ -109,7 +109,7 @@ altitudes.
 |---|---|
 | **Client** | An organization Hyperhunt serves. Owns roles, team contacts, preferences. |
 | **Role** | A mandate. The primary unit of work. Owns exactly one Hiring Pipeline, JD, priority, consultant assignment, and a nullable `calibration` field (reserved for the future relevance engine — do not use yet). |
-| **Hiring Pipeline** | The staged process belonging to a Role: New → Screening → CV Shared → Interview rounds → Offer → Joined. Canonical set by default; a custom stage can be added case-by-case per mandate. The consultant's primary workspace. |
+| **Hiring Pipeline** | The staged process belonging to a Role: New → CV Shared → Round 1 → Round 2 → Round 3 → Offer → Joined. Canonical set by default; a custom stage can be added case-by-case per mandate. The consultant's primary workspace. |
 | **Participation outcome** | How a candidate's involvement in one role ended: `joined` / `rejected_by_client` / `withdrawn_by_candidate` / `offer_declined` / `role_cancelled`, stored with the stage reached and a one-tap rejection reason. Candidate outcomes are separate from Role status (`active` / `paused` / `closed`) and never mixed. |
 | **Candidate** | A person stored once in the Candidate Bank, deduplicated (exact email/phone, LLM fuzzy fallback), linked to any number of roles as a participant. |
 | **Event** | Immutable, timestamped, structured record of any action: upload, stage move, feedback, submission, note, nudge. Carries actor, object references, visibility flag (internal / client_safe). Append-only, forever. |

@@ -42,7 +42,7 @@ Core philosophy, in priority order:
 - Events table is append-only; never update or delete event rows
 - **Stage and outcome are separate fields.** A candidate's participation carries the stage reached AND an outcome (`joined` / `rejected_by_client` / `withdrawn_by_candidate` / `offer_declined` / `role_cancelled`). Candidate outcomes are never mixed with Role status (`active` / `paused` / `closed`)
 - Participation outcomes are first-class events, and carry a one-tap rejection reason from a fixed picklist — never free text
-- Canonical pipeline stages (New → Screening → CV Shared → Interview rounds → Offer → Joined) are the default on every role; a custom stage may be added case-by-case per mandate
+- Canonical pipeline stages (New → CV Shared → Round 1 → Round 2 → Round 3 → Offer → Joined) are the default on every role; a custom stage may be added case-by-case per mandate. Round 2 and Round 3 are shown only if the role's round count enables them
 - The Role object includes a nullable `calibration` field (reserved for the future
   relevance engine — do not use it yet)
 - All schema changes go through migration files, never dashboard edits

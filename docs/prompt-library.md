@@ -396,9 +396,8 @@ logic per role, the dedup rules including edge cases, the upload flow
 end-to-end, and binary acceptance criteria.
 
 Model decisions already made — the spec must honour these:
-- Canonical pipeline stages are the default on every role (New → Screening
-  → CV Shared → Interview rounds → Offer → Joined); a custom stage can be
-  added case-by-case per mandate
+- Canonical pipeline stages are the default on every role (New → CV Shared → Round 1 → Round 2 → Round 3 → Offer → Joined);
+  a custom stage can be added case-by-case per mandate
 - Stage and outcome are separate fields. Candidate participation outcomes:
   joined / rejected_by_client / withdrawn_by_candidate / offer_declined /
   role_cancelled — stored with the stage reached
