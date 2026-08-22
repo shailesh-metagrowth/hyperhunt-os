@@ -1,16 +1,16 @@
 # Hyperhunt OS — Build Status
 
-Last updated: Sprint 0 (setup complete) → Sprint 1 spec in progress
+Last updated: Sprint 1 spec approved and committed → first build session not yet started
 
 ## Current sprint
 
-**Sprint 1 — Identity, Spine & Magic Upload.** Spec drafting underway;
-implementation not started.
+**Sprint 1 — Identity, Spine & Magic Upload.** Spec is **approved and committed**.
+Implementation **not started**. The next working session is the first build
+session: brief the Builder in Plan Mode on the approved spec.
 
 ## Done
 
-**Environment**
-
+**Environment (Sprint 0 setup — complete)**
 - Repo `hyperhunt-os` created (private, HSES-governed), baseline committed and pushed
 - Committed: `CLAUDE.md`, `docs/product-vision.md`, `docs/cheatcodes.md`,
   `docs/backlog.md`, `docs/status.md`, `docs/prompt-library.md`;
@@ -19,109 +19,82 @@ implementation not started.
 - Plugins active: ui-ux-pro-max, ponytail, commit-commands, playwright,
   context7, code review, TypeScript LSP
 - Supabase project `hyperhunt-os-dev` created; MCP connected and scoped to
-  dev only (production off-limits — standing rule saved to Builder memory
-  and written into CLAUDE.md)
+  dev only (production off-limits — standing rule in CLAUDE.md)
 - Vercel account connected via GitHub
 - Claude Project "Hyperhunt OS — Build" created; knowledge loaded; standing
-  Project Instructions set from prompt-library section 2
+  Project Instructions set
 
 **Product definition**
-
 - Vision doc complete: 9 modules, 3 actors, event-log foundation,
   elimination philosophy, 4-sprint phasing, exit criteria
-- Founder briefing written (single-doc onboarding for anyone joining)
-- Prompt library written (project instructions, sprint templates, builder
-  handoff, session close, sprint review)
+- Founder briefing, prompt library, cheatcodes all written and committed
 
-## In progress
-
-**Sprint 1 feature specification** — blocked pending answers to six open
-questions raised by the PM chat:
-
-1. Canonical pipeline stages (fixed set New to Joined/Rejected; open
-   question on "On Hold")
-2. Dedup rules (auto-merge on exact email/phone; fuzzy flagged for
-   confirmation)
-3. Auth roles and sign-in method (all three roles live from Sprint 1;
-   Google sign-in recommended)
-4. Supported CV formats (PDF and DOCX only recommended)
-5. Minimum required fields for Client and Role records
-6. Data import vs. clean start (clean start recommended)
-
-Once answered, spec commits to `docs/specs/sprint-1-identity-spine-upload.md`.
+**Sprint 1 planning (complete)**
+- Sprint 1 spec written, revised, and **approved for build**; committed to
+  `docs/specs/sprint-1-identity-spine-upload.md`
+- All six opening questions resolved (stages, dedup, auth, CV formats,
+  required fields, clean start)
+- Backlog reconciled to approved decisions (Google sign-in in Sprint 1;
+  open-internal access noted)
 
 ## Next objective
 
-Approved Sprint 1 spec committed, then Builder plans implementation in Plan
-Mode, then build begins.
+**Start the first build session.** Open Claude Code, Plan Mode, brief it:
+"Read CLAUDE.md and docs/specs/sprint-1-identity-spine-upload.md. Propose your
+implementation plan before writing any code." Review the plan against build
+order (spec §9), approve, then build slice 1 (schema + auth + org-boundary RLS).
 
-## Recent decisions
+## Locked model decisions (Sprint 1 spec, approved)
 
-- **Identity model added to Sprint 1 scope:** Supabase Auth, three roles
-  (`consultant`, `delivery_lead`, `ceo_admin`), row-level security
-  enforced by the database rather than application code. Admin creates
-  the three accounts manually in Sprint 1; no user-management UI.
-- **One-tap interaction log: approved.** One tap, never typing.
-  Corollary rule adopted: **no manual task lists anywhere in the product.**
-- **Commitments: approved.** Hyperhunt's own delivery promises ("batch of
-  3 CVs by Thursday") captured as role-attached events and watched by the
-  nudge engine — closing the gap generic ageing rules cannot see.
-- **Tiered escalation: approved.** Flags carry severity — nudge, warn,
-  escalate — routed to the altitude that can act, rather than flat alerts.
-- **Consultant Workspace (My Desk)** added as Module 5: the consultant's
-  home screen with computed Today queue (prioritization is derived, never
-  typed).
-
-## Sprint 1 spec revisions (agreed, pending PM update)
-
-The PM's spec draft needs these before any migration is written:
-
-1. **Stages** — canonical set default on every role; rename "Submitted" to
-   "CV Shared"; **"Screening" removed — it is not a stage**; interview stages
-   are named Round 1 / Round 2 / Round 3; no rounds 4-5; custom stage
-   creatable case-by-case per
-   mandate; ADR must state how metrics treat custom stages.
-2. **Outcomes** — candidate participation outcomes expand to five:
-   `joined` / `rejected_by_client` / `withdrawn_by_candidate` /
-   `offer_declined` / `role_cancelled`. These are CANDIDATE outcomes and are
-   never mixed with Role status (`active` / `paused` / `closed`). Store the
-   stage the candidate reached alongside the outcome.
-3. **Rejection reasons** — one-tap picklist in Sprint 1, never free text
-   (the draft's "optional short text" contradicts ADR-011). Context-aware
-   suggestions are a Sprint 3+ enhancement.
-4. **Add-from-Bank** — committed Sprint 2 scope (open role → search Bank →
-   add candidate, ranked on stored attributes). Sprint 1 schema designed so
-   it needs no migration. AI relevance scoring stays with the relevance
-   engine.
-5. **Calibration** — unchanged: reserved, nullable, untouched in Phase 1.
-6. **Candidate profile score** — confirmed out of scope. No global score.
-
-Spec status moves to "Revised — pending approval"; reissue ADR-001 and
-ADR-003; add an ADR for rejection reasons; extend the acceptance test to
-cover rejecting a candidate at Round 2 and confirming both outcome and
-stage-reached are recorded.
+- **Pipeline stages:** New → CV Shared → Round 1 → Round 2 → Round 3 →
+  Round 4 → Round 5 → Offer → Joined / Rejected. Fixed canonical set, **no
+  Screening stage, no custom stages.** Each role sets `interview_rounds`
+  (1–5, default 3) to choose how many round columns show. "CV Shared"
+  replaces "Submitted".
+- **Stage and outcome are separate fields.** Participation outcomes (five):
+  `joined` / `rejected_by_client` / `withdrawn_by_candidate` /
+  `offer_declined` / `role_cancelled` — stored with `stage_reached` and
+  `ended_at`. Never mixed with **role status** (`active` / `paused` /
+  `closed`, with its own close reasons).
+- **Rejection reasons:** fixed one-tap picklist, no free text (ADR-012).
+  Context-aware suggestions deferred to Sprint 3+.
+- **Access (Phase 1: open internally):** Google sign-in, three roles.
+  RLS enforces the **org boundary** and signed-out = no access; all internal
+  users see all org data — focus comes from filters (My roles / by consultant
+  / by client), not hard walls. Per-consultant walls deferred to the
+  multi-tenant phase.
+- **Two source fields:** `candidates.source` (first-ever touch, immutable)
+  vs `candidate_roles.source` (per-role origination). Origination path
+  (`magic_upload` / `bank_add`) recorded on the linking event.
+- **Add-from-Bank:** schema designed in Sprint 1; search UI ships Sprint 2
+  (attribute-based ranking only; AI relevance stays with the relevance engine).
+- **Assignment (ADR-014):** clients assigned to a consultant, roles inherit;
+  consultant / lead / CEO can reassign (emits event). Role title editable;
+  multiple openings = sibling roles.
+- **Calibration:** reserved, nullable, untouched in Phase 1.
+- **No global candidate profile score** — rejected on principle.
+- **No manual task lists anywhere** (ADR-011).
+- ADRs 001–014 to be written to `docs/adr/` during the build.
 
 ## Schema notes for Sprint 1
 
-The event taxonomy must accommodate, from day one:
-
-- Commitment events and interaction events (used in Sprint 3)
-- A severity dimension on flags (nudge / warn / escalate)
+The event taxonomy accommodates, from day one:
+- Reserved events used from Sprint 3: `commitment_made`, `interaction_logged`,
+  `feedback_recorded`, `flag_raised`
+- A nullable `severity` dimension on flag events (nudge / warn / escalate)
 - A visibility flag on every event (internal / client_safe)
-- `org_id` on every table; RLS on every table with `org_id`
+- `org_id` on every table; RLS (org boundary) on every table with `org_id`
 - Events append-only; Role carries a nullable `calibration` field
   (reserved for the future relevance engine — unused in Phase 1)
-
-Designing these in now avoids a painful retrofit in Sprint 3.
 
 ## Open decisions (product-level)
 
 1. Product repo — RESOLVED: `hyperhunt-os`, private, HSES-governed
-2. Pipeline stage set — being resolved in the Sprint 1 spec questions
+2. Pipeline stage set — RESOLVED in the approved Sprint 1 spec
 3. Nudge thresholds — confirm the seven v1 SLA values with consultants
    before Sprint 3
-4. Dedup policy edge cases — changed email/phone; same person via two
-   sources
+4. Dedup policy edge cases — keyless CV (no email/phone) resolved: fuzzy +
+   always-confirm. Changed email/phone still open, revisit if it bites
 5. WhatsApp OBA verification — **not yet started; start soon.** Weeks-long
    clock only begins on submission
 6. One-tap interaction log — RESOLVED: approved
@@ -135,13 +108,15 @@ Designing these in now avoids a painful retrofit in Sprint 3.
 
 ## Blockers
 
-- Sprint 1 spec blocked on the six answers above (founder decision, not
-  technical)
+- None blocking the first build session — planning is complete and the spec
+  is approved.
 - WhatsApp OBA not started (does not block internal phase; does delay the
-  external phase)
+  external phase).
 
 ## Notes for the next chat
 
+- Build has **not** started yet. The next session is the first build session
+  (planning with the Builder in Plan Mode).
 - Founder is non-technical. Plain language for every decision; teach while
   building.
 - Elimination philosophy governs all scope: features must delete manual
@@ -149,6 +124,5 @@ Designing these in now avoids a painful retrofit in Sprint 3.
 - Event log is the foundation — every derived view reads from it; never
   build separately maintained state.
 - New ideas go to `backlog.md` with one line, not into the current sprint.
-- A fractional technical person may join in an advisory/review capacity.
-  Test for any technical recommendation: after they are gone, can the
-  founder plus Claude Code maintain this?
+- The approved spec is law for Sprint 1; CLAUDE.md is law for build questions.
+  If they ever disagree, stop and reconcile before building.
